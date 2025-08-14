@@ -4,11 +4,23 @@ import { Post } from 'types/blog.type'
 
 export const blogApi = createApi({
   reducerPath: 'blogApi',
+  tagTypes: ['Posts'],
   baseQuery: fetchBaseQuery({ baseUrl: 'http://localhost:4000/' }),
   endpoints: (build) => ({
     //Generic type theo tứ tự là kiểu response trả về agrunment
     getPosts: build.query<Post[], void>({
-      query: () => 'posts' // method không có argument
+      query: () => 'posts', // method không có argument
+      providesTags(result){
+        if(result){
+          const final = [
+            ...result.map(({id})=> ({type : 'Posts' as const,id})),
+            {type : 'Posts' as const , id : 'LIST'}
+          ]
+          return final
+        }
+        const final = [{type : 'Posts' as const,id : 'LIST'}]
+        return final
+      }
     }),
     addPost: build.mutation<Post,Omit<Post,'id'>>({
       query(body){
@@ -17,7 +29,8 @@ export const blogApi = createApi({
           method : 'POST',
           body
         }
-      }
+      },
+      invalidatesTags:(result,error,body) => [{type:'Posts',id :'LIST'}]
     })
   })
 })
